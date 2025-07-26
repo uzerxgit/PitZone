@@ -65,6 +65,12 @@ export default function AttendanceCalculator() {
       endDate: new Date(),
     },
   });
+  
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === '0') {
+      form.setValue(e.target.name as 'attendedPeriods' | 'totalPeriods', undefined);
+    }
+  };
 
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
     if (isAfter(values.startDate, values.endDate)) {
@@ -110,7 +116,7 @@ export default function AttendanceCalculator() {
     }
     
     const periodsToLeave = type === 'days' ? leaveAmount * (customSettings.periods.reduce((a,b)=>a+b,0)/customSettings.periods.filter(p=>p>0).length) : leaveAmount;
-    const simAttended = result.finalAttended - periodsToLeave;
+    const simAttended = Math.round(result.finalAttended - periodsToLeave);
     const simTotal = result.finalTotal;
 
     if (simAttended < 0) {
@@ -130,7 +136,7 @@ export default function AttendanceCalculator() {
             ? `After leave, you must attend until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}%.`
             : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = `After leave, you can still miss ${canMissPeriods} period(s).`;
+        message = `After leave, you can still miss ${Math.floor(canMissPeriods)} period(s).`;
     }
 
     setSimulationResult({ finalAttended: simAttended, finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -256,6 +262,7 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 80" 
                             {...field}
+                            onFocus={handleFocus}
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -271,6 +278,7 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 100" 
                             {...field}
+                            onFocus={handleFocus}
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -389,3 +397,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
