@@ -6,26 +6,28 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format, isAfter } from "date-fns";
-import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { calculatePeriodsInRange, findRequiredAttendanceDate } from "@/lib/attendance";
+import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
 import { getAttendanceAdvice } from "@/lib/actions";
 
 const formSchema = z.object({
-  attendedPeriods: z.coerce.number().min(0, "Cannot be negative"),
-  totalPeriods: z.coerce.number().min(0, "Cannot be negative"),
+  attendedPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
+  totalPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
   startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date({ required_error: "End date is required." }),
-}).refine(data => data.totalPeriods >= data.attendedPeriods, {
+}).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
     message: "Total periods cannot be less than attended periods.",
     path: ["totalPeriods"],
 });
@@ -40,12 +42,19 @@ type ResultState = {
   message: string;
 } | null;
 
+const initialCustomSettings: CustomPeriodSettings = {
+    periods: [6, 7, 8, 7, 0, 6, 7],
+    percentage: 75,
+};
+
 export default function AttendanceCalculator() {
   const { toast } = useToast();
   const [result, setResult] = useState<ResultState>(null);
   const [simulationResult, setSimulationResult] = useState<ResultState>(null);
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
+  const [isCustomizationOpen, setCustomizationOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,10 +71,12 @@ export default function AttendanceCalculator() {
         toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
         return;
     }
+    const attendedSoFar = values.attendedPeriods ?? 0;
+    const totalSoFar = values.totalPeriods ?? 0;
 
     const periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
-    const finalTotal = values.totalPeriods + periodsInDateRange;
-    const finalAttended = values.attendedPeriods + periodsInDateRange;
+    const finalTotal = totalSoFar + periodsInDateRange;
+    const finalAttended = attendedSoFar + periodsInDateRange;
 
     if (finalTotal <= 0) {
         toast({ title: "No Periods Found", description: "Total periods are zero. Cannot calculate attendance.", variant: "destructive" });
@@ -74,21 +85,21 @@ export default function AttendanceCalculator() {
     }
     
     const percentage = (finalAttended / finalTotal) * 100;
-    const periodsToMaintain = Math.ceil(finalTotal * 0.75);
+    const periodsToMaintain = Math.ceil(finalTotal * (customSettings.percentage / 100));
     const canMissPeriods = finalAttended - periodsToMaintain;
     const requiredDate = findRequiredAttendanceDate(finalAttended, finalTotal, values.endDate);
 
     let message = "You're on track! Keep it up.";
-    if (percentage < 75) {
+    if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? `You need to attend classes until ${format(requiredDate, "PPP")} to reach 75% attendance.`
-            : "You may not be able to reach 75% attendance this year.";
+            ? `You need to attend classes until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}% attendance.`
+            : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = `You can afford to miss ${canMissPeriods} period(s) and maintain 75% attendance.`;
+        message = `You can afford to miss ${canMissPeriods} period(s) and maintain ${customSettings.percentage}% attendance.`;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
-    setSimulationResult(null); // Reset simulation on new calculation
+    setSimulationResult(null);
     setAiAdvice(null);
   };
   
@@ -98,7 +109,7 @@ export default function AttendanceCalculator() {
         return;
     }
     
-    const periodsToLeave = type === 'days' ? leaveAmount * 6 : leaveAmount; // Assuming 6 periods per day for simulation
+    const periodsToLeave = type === 'days' ? leaveAmount * (customSettings.periods.reduce((a,b)=>a+b,0)/customSettings.periods.filter(p=>p>0).length) : leaveAmount;
     const simAttended = result.finalAttended - periodsToLeave;
     const simTotal = result.finalTotal;
 
@@ -114,10 +125,10 @@ export default function AttendanceCalculator() {
     const requiredDate = findRequiredAttendanceDate(simAttended, simTotal, endDate);
     
     let message = "You're still on track after the leave!";
-     if (percentage < 75) {
+     if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? `After leave, you must attend until ${format(requiredDate, "PPP")} to reach 75%.`
-            : "After leave, you may not reach 75% attendance this year.";
+            ? `After leave, you must attend until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}%.`
+            : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
         message = `After leave, you can still miss ${canMissPeriods} period(s).`;
     }
@@ -141,9 +152,29 @@ export default function AttendanceCalculator() {
     setIsLoadingAi(false);
   };
 
+  const handleSettingsSave = () => {
+    setCustomPeriodSettings(customSettings);
+    setCustomizationOpen(false);
+    if(form.formState.isValid) {
+      handleCalculate(form.getValues());
+    }
+  };
+
+  const onFocus = (name: "attendedPeriods" | "totalPeriods") => {
+    if (form.getValues(name) === 0) {
+      form.setValue(name, undefined);
+    }
+  };
+
+  const onBlur = (name: "attendedPeriods" | "totalPeriods") => {
+      if (form.getValues(name) === undefined) {
+          form.setValue(name, 0);
+      }
+  };
+
   const ResultCard = ({ res, title, icon }: { res: ResultState, title: string, icon: React.ReactNode }) => {
     if (!res) return null;
-    const isBelow75 = res.percentage < 75;
+    const isBelowThreshold = res.percentage < customSettings.percentage;
     return (
         <Card className="shadow-lg animate-in fade-in-0 zoom-in-95 duration-500">
             <CardHeader>
@@ -151,22 +182,22 @@ export default function AttendanceCalculator() {
                 <CardDescription>{res.message}</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className={cn("p-4 rounded-lg", isBelow75 ? "bg-destructive/10" : "bg-primary/10")}>
+                <div className={cn("p-4 rounded-lg", isBelowThreshold ? "bg-destructive/10" : "bg-primary/10")}>
                     <p className="text-sm text-muted-foreground">Attendance</p>
-                    <p className={cn("text-3xl font-bold", isBelow75 ? "text-destructive" : "text-primary")}>{res.percentage.toFixed(2)}%</p>
+                    <p className={cn("text-3xl font-bold", isBelowThreshold ? "text-destructive" : "text-primary")}>{res.percentage.toFixed(2)}%</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Periods</p>
                     <p className="text-3xl font-bold">{res.finalAttended}/{res.finalTotal}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
-                    <p className="text-sm text-muted-foreground">Need for 75%</p>
+                    <p className="text-sm text-muted-foreground">Need for {customSettings.percentage}%</p>
                     <p className="text-3xl font-bold">{res.periodsToMaintain}</p>
                 </div>
                  <div className={cn("p-4 rounded-lg", res.canMissPeriods < 0 ? "bg-destructive/10" : "bg-green-500/10")}>
                     <p className="text-sm text-muted-foreground">Buffer Periods</p>
                     <p className={cn("text-3xl font-bold", res.canMissPeriods < 0 ? "text-destructive" : "text-green-600")}>
-                        {res.canMissPeriods >= 0 ? `+${res.canMissPeriods}` : res.canMissPeriods}
+                        {res.canMissPeriods >= 0 ? `+${Math.floor(res.canMissPeriods)}` : Math.ceil(res.canMissPeriods)}
                     </p>
                 </div>
             </CardContent>
@@ -177,9 +208,53 @@ export default function AttendanceCalculator() {
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Attendance Details</CardTitle>
-          <CardDescription>Enter your current attendance and select the date range for calculation.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Attendance Details</CardTitle>
+              <CardDescription>Enter your current attendance and select the date range for calculation.</CardDescription>
+            </div>
+             <Dialog open={isCustomizationOpen} onOpenChange={setCustomizationOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon"><Settings className="h-5 w-5" /></Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Customize Calculation</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Periods per Day (Sun-Sat)</Label>
+                            <div className="grid grid-cols-7 gap-2">
+                                {customSettings.periods.map((p, i) => (
+                                    <Input
+                                        key={i}
+                                        type="number"
+                                        value={p}
+                                        onChange={(e) => {
+                                            const newPeriods = [...customSettings.periods];
+                                            newPeriods[i] = parseInt(e.target.value) || 0;
+                                            setCustomSettings({ ...customSettings, periods: newPeriods });
+                                        }}
+                                        className="text-center"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Required Attendance Percentage</Label>
+                            <Input
+                                type="number"
+                                value={customSettings.percentage}
+                                onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setCustomizationOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSettingsSave}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -188,14 +263,34 @@ export default function AttendanceCalculator() {
                 <FormField control={form.control} name="attendedPeriods" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Periods Attended (So Far)</FormLabel>
-                    <FormControl><Input type="number" placeholder="e.g., 80" {...field} /></FormControl>
+                    <FormControl>
+                        <Input 
+                            type="number" 
+                            placeholder="e.g., 80" 
+                            {...field}
+                            onFocus={() => onFocus('attendedPeriods')} 
+                            onBlur={() => onBlur('attendedPeriods')}
+                            onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                            value={field.value ?? ''}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="totalPeriods" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Total Periods (So Far)</FormLabel>
-                    <FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl>
+                    <FormControl>
+                        <Input 
+                            type="number" 
+                            placeholder="e.g., 100" 
+                            {...field}
+                            onFocus={() => onFocus('totalPeriods')}
+                            onBlur={() => onBlur('totalPeriods')}
+                            onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                            value={field.value ?? ''}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

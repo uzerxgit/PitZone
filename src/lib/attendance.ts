@@ -2,18 +2,32 @@ import { isAfter } from 'date-fns';
 
 type YearData = number[][];
 
-const yearData = ((): YearData => {
+export interface CustomPeriodSettings {
+    periods: number[]; // Sun -> Sat
+    percentage: number;
+}
+
+let currentSettings: CustomPeriodSettings = {
+    periods: [6, 7, 8, 7, 0, 6, 7], // Default cycle
+    percentage: 75,
+};
+
+export const setCustomPeriodSettings = (settings: CustomPeriodSettings) => {
+    currentSettings = settings;
+};
+
+const generateYearData = (): YearData => {
     const year: YearData = [];
-    const periodCycle = [6, 7, 8, 7, 0, 6, 7];
-    let cycleIndex = 0; 
+    let dayOfWeek = new Date(new Date().getFullYear(), 0, 1).getDay(); // Get day of week for Jan 1st
 
     const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    // TODO: Handle leap years
 
     for (let m = 0; m < 12; m++) {
         const month: number[] = [];
         for (let d = 0; d < monthLengths[m]; d++) {
-            month.push(periodCycle[cycleIndex]);
-            cycleIndex = (cycleIndex + 1) % 7;
+            month.push(currentSettings.periods[dayOfWeek]);
+            dayOfWeek = (dayOfWeek + 1) % 7;
         }
         year.push(month);
     }
@@ -38,10 +52,11 @@ const yearData = ((): YearData => {
         }
     }
     return year;
-})();
+};
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
     if (isAfter(startDate, endDate)) return 0;
+    const yearData = generateYearData();
 
     let totalPeriods = 0;
     const startMonth = startDate.getMonth();
@@ -69,10 +84,12 @@ export const findRequiredAttendanceDate = (
     currentTotal: number,
     checkFromDate: Date,
 ): Date | null => {
-    if (currentTotal > 0 && (currentAttended / currentTotal) >= 0.75) {
+    const requiredPercentage = currentSettings.percentage / 100;
+    if (currentTotal > 0 && (currentAttended / currentTotal) >= requiredPercentage) {
         return null;
     }
-
+    
+    const yearData = generateYearData();
     let tempAttended = currentAttended;
     let tempTotal = currentTotal;
     const currentYear = checkFromDate.getFullYear();
@@ -89,11 +106,11 @@ export const findRequiredAttendanceDate = (
                 tempTotal += periodsToday;
             }
 
-            if (tempTotal > 0 && (tempAttended / tempTotal) >= 0.75) {
+            if (tempTotal > 0 && (tempAttended / tempTotal) >= requiredPercentage) {
                 return new Date(currentYear, m, d);
             }
         }
     }
     
-    return null; // Cannot reach 75% within the year
+    return null; // Cannot reach threshold within the year
 };
