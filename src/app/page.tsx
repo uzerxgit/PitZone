@@ -13,7 +13,7 @@ export default function Home() {
              </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Your AI-powered attendance advisor to balance studies and well-being.
+            manage your leaves, ease your life
           </p>
         </header>
         
