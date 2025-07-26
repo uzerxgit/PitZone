@@ -39,7 +39,7 @@ type ResultState = {
   periodsToMaintain: number;
   canMissPeriods: number;
   requiredDate: Date | null;
-  message: string;
+  message: React.ReactNode;
 } | null;
 
 const initialCustomSettings: CustomPeriodSettings = {
@@ -107,10 +107,10 @@ export default function AttendanceCalculator() {
     const canMissPeriods = finalAttended - periodsToMaintain;
     const requiredDate = findRequiredAttendanceDate(finalAttended, finalTotal, values.endDate);
 
-    let message = "You're on track! Keep it up.";
+    let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? `You need to attend classes until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}% attendance.`
+            ? <>You need to attend classes until {format(requiredDate, "PPP")} to reach {customSettings.percentage}% attendance.<br/>STAY OUT! STAY OUT! STAY OUT!</>
             : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
         message = `You can afford to miss ${Math.floor(canMissPeriods)} period(s) and maintain ${customSettings.percentage}% attendance.`;
@@ -142,7 +142,7 @@ export default function AttendanceCalculator() {
     const { endDate } = form.getValues();
     const requiredDate = findRequiredAttendanceDate(simAttended, simTotal, endDate);
     
-    let message = "You're still on track after the leave!";
+    let message: React.ReactNode = "You're still on track after the leave!";
      if (percentage < customSettings.percentage) {
         message = requiredDate 
             ? `After leave, you must attend until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}%.`
@@ -160,13 +160,21 @@ export default function AttendanceCalculator() {
     setAiAdvice(null);
     const { startDate, endDate, attendedPeriods, totalPeriods } = form.getValues();
 
-    const advice = await getAttendanceAdvice({
-      attendedPeriods: attendedPeriods ?? 0,
-      totalPeriods: totalPeriods ?? 0,
-      startDate: format(startDate, 'yyyy-MM-dd'),
-      endDate: format(endDate, 'yyyy-MM-dd'),
-    });
-    setAiAdvice(advice);
+    try {
+      const advice = await getAttendanceAdvice({
+        attendedPeriods: attendedPeriods ?? 0,
+        totalPeriods: totalPeriods ?? 0,
+        startDate: format(startDate, 'yyyy-MM-dd'),
+        endDate: format(endDate, 'yyyy-MM-dd'),
+      });
+      setAiAdvice(advice);
+    } catch (e) {
+      toast({
+        title: "Error getting AI advice",
+        description: "Could not get advice from the AI. Please try again later.",
+        variant: "destructive"
+      });
+    }
     setIsLoadingAi(false);
   };
 
@@ -423,3 +431,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
