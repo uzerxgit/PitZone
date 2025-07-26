@@ -20,7 +20,7 @@ export default function Home() {
         <AttendanceCalculator />
 
         <footer className="text-center text-muted-foreground/80 text-sm pt-8">
-          <p>Make every class count. Plan smart, stay well.</p>
+          <p>Make every leave count. Plan smart, Play well</p>
         </footer>
       </div>
     </main>
