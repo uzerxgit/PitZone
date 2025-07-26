@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -65,11 +65,11 @@ export default function AttendanceCalculator() {
       attendedPeriods: undefined,
       totalPeriods: undefined,
       startDate: new Date(),
-      endDate: currentEndDate,
+      endDate: undefined,
     },
   });
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentEndDate) {
         form.setValue("endDate", currentEndDate, { shouldValidate: true, shouldDirty: true });
     }
@@ -368,7 +368,7 @@ export default function AttendanceCalculator() {
             <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
-                    <CardDescription>See how taking a leave affects your attendance.</CardDescription>
+                    <CardDescription>See how taking a leave affects your lap time.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="periods">
