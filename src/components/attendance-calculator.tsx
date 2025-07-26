@@ -59,8 +59,8 @@ export default function AttendanceCalculator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      attendedPeriods: 0,
-      totalPeriods: 0,
+      attendedPeriods: undefined,
+      totalPeriods: undefined,
       startDate: new Date(),
       endDate: new Date(),
     },
@@ -160,18 +160,6 @@ export default function AttendanceCalculator() {
     }
   };
 
-  const onFocus = (name: "attendedPeriods" | "totalPeriods") => {
-    if (form.getValues(name) === 0) {
-      form.setValue(name, undefined);
-    }
-  };
-
-  const onBlur = (name: "attendedPeriods" | "totalPeriods") => {
-      if (form.getValues(name) === undefined) {
-          form.setValue(name, 0);
-      }
-  };
-
   const ResultCard = ({ res, title, icon }: { res: ResultState, title: string, icon: React.ReactNode }) => {
     if (!res) return null;
     const isBelowThreshold = res.percentage < customSettings.percentage;
@@ -268,8 +256,6 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 80" 
                             {...field}
-                            onFocus={() => onFocus('attendedPeriods')} 
-                            onBlur={() => onBlur('attendedPeriods')}
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -285,8 +271,6 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 100" 
                             {...field}
-                            onFocus={() => onFocus('totalPeriods')}
-                            onBlur={() => onBlur('totalPeriods')}
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
