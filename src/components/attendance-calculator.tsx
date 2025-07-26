@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -57,6 +57,7 @@ export default function AttendanceCalculator() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
+  const [currentEndDate, setCurrentEndDate] = useState<Date | undefined>(undefined);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,12 +65,22 @@ export default function AttendanceCalculator() {
       attendedPeriods: undefined,
       totalPeriods: undefined,
       startDate: new Date(),
+      endDate: currentEndDate,
     },
   });
   
+  React.useEffect(() => {
+    if (currentEndDate) {
+        form.setValue("endDate", currentEndDate, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [currentEndDate, form]);
+
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (e.target.value === '0') {
-      form.setValue(e.target.name as 'attendedPeriods' | 'totalPeriods', undefined);
+    if (e.target.name === 'attendedPeriods' || e.target.name === 'totalPeriods') {
+        const value = form.getValues(e.target.name as 'attendedPeriods' | 'totalPeriods');
+        if (value === 0) {
+            form.setValue(e.target.name as 'attendedPeriods' | 'totalPeriods', undefined);
+        }
     }
   };
 
@@ -324,7 +335,16 @@ export default function AttendanceCalculator() {
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            <Calendar 
+                                mode="single" 
+                                selected={field.value} 
+                                onSelect={(date) => {
+                                    field.onChange(date);
+                                    setCurrentEndDate(date);
+                                }} 
+                                month={field.value}
+                                initialFocus
+                            />
                         </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -403,5 +423,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
