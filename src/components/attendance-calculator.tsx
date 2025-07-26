@@ -47,6 +47,8 @@ const initialCustomSettings: CustomPeriodSettings = {
     percentage: 75,
 };
 
+const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export default function AttendanceCalculator() {
   const { toast } = useToast();
   const [result, setResult] = useState<ResultState>(null);
@@ -101,7 +103,7 @@ export default function AttendanceCalculator() {
             ? `You need to attend classes until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}% attendance.`
             : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = `You can afford to miss ${canMissPeriods} period(s) and maintain ${customSettings.percentage}% attendance.`;
+        message = `You can afford to miss ${Math.floor(canMissPeriods)} period(s) and maintain ${customSettings.percentage}% attendance.`;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -182,7 +184,7 @@ export default function AttendanceCalculator() {
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Periods</p>
-                    <p className="text-3xl font-bold">{res.finalAttended}/{res.finalTotal}</p>
+                    <p className="text-3xl font-bold">{Math.floor(res.finalAttended)}/{res.finalTotal}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Need for {customSettings.percentage}%</p>
@@ -217,20 +219,23 @@ export default function AttendanceCalculator() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Periods per Day (Sun-Sat)</Label>
+                            <Label>Periods per Day</Label>
                             <div className="grid grid-cols-7 gap-2">
-                                {customSettings.periods.map((p, i) => (
-                                    <Input
-                                        key={i}
-                                        type="number"
-                                        value={p}
-                                        onChange={(e) => {
-                                            const newPeriods = [...customSettings.periods];
-                                            newPeriods[i] = parseInt(e.target.value) || 0;
-                                            setCustomSettings({ ...customSettings, periods: newPeriods });
-                                        }}
-                                        className="text-center"
-                                    />
+                                {dayLabels.map((day, i) => (
+                                    <div key={i} className="flex flex-col items-center gap-1">
+                                        <Label htmlFor={`day-${i}`} className="text-xs text-muted-foreground">{day}</Label>
+                                        <Input
+                                            id={`day-${i}`}
+                                            type="number"
+                                            value={customSettings.periods[i]}
+                                            onChange={(e) => {
+                                                const newPeriods = [...customSettings.periods];
+                                                newPeriods[i] = parseInt(e.target.value) || 0;
+                                                setCustomSettings({ ...customSettings, periods: newPeriods });
+                                            }}
+                                            className="text-center"
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -399,5 +404,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
