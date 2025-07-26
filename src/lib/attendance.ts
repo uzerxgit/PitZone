@@ -8,7 +8,7 @@ export interface CustomPeriodSettings {
 }
 
 let currentSettings: CustomPeriodSettings = {
-    periods: [6, 7, 8, 7, 0, 6, 7], // Default cycle
+    periods: [6, 7, 8, 7, 0, 6, 7], // Default cycle: Sun -> Sat
     percentage: 75,
 };
 
@@ -18,7 +18,7 @@ export const setCustomPeriodSettings = (settings: CustomPeriodSettings) => {
 
 const generateYearData = (): YearData => {
     const year: YearData = [];
-    let dayOfWeek = new Date(new Date().getFullYear(), 0, 1).getDay(); // Get day of week for Jan 1st
+    let dayOfWeek = new Date(new Date().getFullYear(), 0, 1).getDay(); // Get day of week for Jan 1st (0=Sun, 1=Mon...)
 
     const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     // TODO: Handle leap years

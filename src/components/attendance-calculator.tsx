@@ -43,7 +43,7 @@ type ResultState = {
 } | null;
 
 const initialCustomSettings: CustomPeriodSettings = {
-    periods: [6, 7, 8, 7, 0, 6, 7],
+    periods: [6, 7, 8, 7, 0, 6, 7], // Sun, Mon, Tue, Wed, Thu, Fri, Sat
     percentage: 75,
 };
 
@@ -118,7 +118,7 @@ export default function AttendanceCalculator() {
     }
     
     const periodsToLeave = type === 'days' ? leaveAmount * (customSettings.periods.reduce((a,b)=>a+b,0)/customSettings.periods.filter(p=>p>0).length) : leaveAmount;
-    const simAttended = Math.floor(result.finalAttended - periodsToLeave);
+    const simAttended = result.finalAttended - periodsToLeave;
     const simTotal = result.finalTotal;
 
     if (simAttended < 0) {
@@ -141,7 +141,7 @@ export default function AttendanceCalculator() {
         message = `After leave, you can still miss ${Math.floor(canMissPeriods)} period(s).`;
     }
 
-    setSimulationResult({ finalAttended: simAttended, finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
+    setSimulationResult({ finalAttended: Math.floor(simAttended), finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
   };
 
   const handleGetAiAdvice = async () => {
@@ -163,7 +163,7 @@ export default function AttendanceCalculator() {
   const handleSettingsSave = () => {
     setCustomPeriodSettings(customSettings);
     setCustomizationOpen(false);
-    if(form.formState.isValid) {
+    if(form.formState.isValid && (form.formState.dirtyFields.attendedPeriods || form.formState.dirtyFields.totalPeriods)) {
       handleCalculate(form.getValues());
     }
   };
@@ -184,7 +184,7 @@ export default function AttendanceCalculator() {
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Periods</p>
-                    <p className="text-3xl font-bold">{Math.floor(res.finalAttended)}/{res.finalTotal}</p>
+                    <p className="text-3xl font-bold">{res.finalAttended}/{res.finalTotal}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Need for {customSettings.percentage}%</p>
