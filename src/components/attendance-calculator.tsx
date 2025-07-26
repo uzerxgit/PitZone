@@ -13,7 +13,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -21,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
 import { getAttendanceAdvice } from "@/lib/actions";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   attendedPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
@@ -116,7 +116,7 @@ export default function AttendanceCalculator() {
     }
     
     const periodsToLeave = type === 'days' ? leaveAmount * (customSettings.periods.reduce((a,b)=>a+b,0)/customSettings.periods.filter(p=>p>0).length) : leaveAmount;
-    const simAttended = Math.round(result.finalAttended - periodsToLeave);
+    const simAttended = Math.floor(result.finalAttended - periodsToLeave);
     const simTotal = result.finalTotal;
 
     if (simAttended < 0) {
@@ -146,11 +146,11 @@ export default function AttendanceCalculator() {
     if (!result) return;
     setIsLoadingAi(true);
     setAiAdvice(null);
-    const { startDate, endDate } = form.getValues();
+    const { startDate, endDate, attendedPeriods, totalPeriods } = form.getValues();
 
     const advice = await getAttendanceAdvice({
-      attendedPeriods: result.finalAttended,
-      totalPeriods: result.finalTotal,
+      attendedPeriods: attendedPeriods ?? 0,
+      totalPeriods: totalPeriods ?? 0,
       startDate: format(startDate, 'yyyy-MM-dd'),
       endDate: format(endDate, 'yyyy-MM-dd'),
     });
@@ -244,7 +244,9 @@ export default function AttendanceCalculator() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setCustomizationOpen(false)}>Cancel</Button>
+                        <DialogClose asChild>
+                           <Button variant="outline">Cancel</Button>
+                        </DialogClose>
                         <Button onClick={handleSettingsSave}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
