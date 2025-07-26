@@ -64,7 +64,6 @@ export default function AttendanceCalculator() {
       attendedPeriods: undefined,
       totalPeriods: undefined,
       startDate: new Date(),
-      endDate: new Date(),
     },
   });
   
@@ -163,7 +162,7 @@ export default function AttendanceCalculator() {
   const handleSettingsSave = () => {
     setCustomPeriodSettings(customSettings);
     setCustomizationOpen(false);
-    if(form.formState.isValid && (form.formState.dirtyFields.attendedPeriods || form.formState.dirtyFields.totalPeriods)) {
+    if(form.formState.isDirty && form.formState.isValid) {
       handleCalculate(form.getValues());
     }
   };
@@ -404,3 +403,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
