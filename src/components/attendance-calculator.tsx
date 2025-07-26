@@ -216,7 +216,7 @@ export default function AttendanceCalculator() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Attendance Details</CardTitle>
+              <CardTitle>Radio Check!</CardTitle>
               <CardDescription>Enter your current attendance and select the date range for calculation.</CardDescription>
             </div>
              <Dialog open={isCustomizationOpen} onOpenChange={setCustomizationOpen}>
