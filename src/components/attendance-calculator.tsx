@@ -58,6 +58,8 @@ export default function AttendanceCalculator() {
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
   const [currentEndDate, setCurrentEndDate] = useState<Date | undefined>(undefined);
+  const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,6 +74,7 @@ export default function AttendanceCalculator() {
   useEffect(() => {
     if (currentEndDate) {
         form.setValue("endDate", currentEndDate, { shouldValidate: true, shouldDirty: true });
+        setEndDateMonth(currentEndDate);
     }
   }, [currentEndDate, form]);
 
@@ -349,8 +352,9 @@ export default function AttendanceCalculator() {
                                 onSelect={(date) => {
                                     field.onChange(date);
                                     setCurrentEndDate(date);
-                                }} 
-                                month={field.value}
+                                }}
+                                onMonthChange={setEndDateMonth}
+                                month={endDateMonth}
                                 initialFocus
                             />
                         </PopoverContent>
