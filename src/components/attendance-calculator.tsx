@@ -65,7 +65,7 @@ export default function AttendanceCalculator() {
 
     const periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
     const finalTotal = values.totalPeriods + periodsInDateRange;
-    const finalAttended = values.attendedPeriods; // Assuming initial attended is up to start date
+    const finalAttended = values.attendedPeriods + periodsInDateRange;
 
     if (finalTotal <= 0) {
         toast({ title: "No Periods Found", description: "Total periods are zero. Cannot calculate attendance.", variant: "destructive" });
