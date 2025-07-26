@@ -8,7 +8,7 @@ export interface CustomPeriodSettings {
 }
 
 let currentSettings: CustomPeriodSettings = {
-    periods: [6, 7, 8, 7, 0, 6, 7], // Default cycle: Sun -> Sat
+    periods: [0, 6, 7, 8, 7, 6, 7], // Sun -> Sat
     percentage: 75,
 };
 

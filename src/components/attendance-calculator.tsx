@@ -43,7 +43,7 @@ type ResultState = {
 } | null;
 
 const initialCustomSettings: CustomPeriodSettings = {
-    periods: [6, 7, 8, 7, 0, 6, 7], // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+    periods: [0, 6, 7, 8, 7, 6, 7], // Sun, Mon, Tue, Wed, Thu, Fri, Sat
     percentage: 75,
 };
 
@@ -184,7 +184,7 @@ export default function AttendanceCalculator() {
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Periods</p>
-                    <p className="text-3xl font-bold">{res.finalAttended}/{res.finalTotal}</p>
+                    <p className="text-3xl font-bold">{Math.floor(res.finalAttended)}/{res.finalTotal}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                     <p className="text-sm text-muted-foreground">Need for {customSettings.percentage}%</p>
