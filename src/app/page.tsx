@@ -13,7 +13,7 @@ export default function Home() {
              </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            manage your leaves, ease your life
+            Check you league stats, Manage, Rollout
           </p>
         </header>
         
