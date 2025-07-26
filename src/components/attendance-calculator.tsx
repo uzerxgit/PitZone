@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
-import { getAttendanceAdvice } from "@/lib/actions";
+import { attendanceAdvisor } from "@/ai/flows/attendance-advisor";
 import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
@@ -113,7 +113,7 @@ export default function AttendanceCalculator() {
             ? <>You need to attend classes until {format(requiredDate, "PPP")} to reach {customSettings.percentage}% attendance.<br/>STAY OUT! STAY OUT! STAY OUT!</>
             : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = `You can afford to miss ${Math.floor(canMissPeriods)} period(s) and maintain ${customSettings.percentage}% attendance.`;
+        message = <>{`You can afford to miss ${Math.floor(canMissPeriods)} period(s) and maintain ${customSettings.percentage}% attendance.`}<br/>LOUD AND CLEAR!</>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -161,13 +161,13 @@ export default function AttendanceCalculator() {
     const { startDate, endDate, attendedPeriods, totalPeriods } = form.getValues();
 
     try {
-      const advice = await getAttendanceAdvice({
+      const result = await attendanceAdvisor({
         attendedPeriods: attendedPeriods ?? 0,
         totalPeriods: totalPeriods ?? 0,
         startDate: format(startDate, 'yyyy-MM-dd'),
         endDate: format(endDate, 'yyyy-MM-dd'),
       });
-      setAiAdvice(advice);
+      setAiAdvice(result.recommendation);
     } catch (e) {
       toast({
         title: "Error getting AI advice",
