@@ -239,7 +239,7 @@ export default function AttendanceCalculator() {
                                         <Input
                                             id={`day-${i}`}
                                             type="number"
-                                            value={customSettings.periods[i]}
+                                            value={customSettings.periods[i] || ''}
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
@@ -249,6 +249,7 @@ export default function AttendanceCalculator() {
                                                 }
                                             }}
                                             className="text-center"
+                                            placeholder="0"
                                         />
                                     </div>
                                 ))}
