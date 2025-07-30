@@ -248,7 +248,7 @@ export default function AttendanceCalculator() {
                                                     setCustomSettings({ ...customSettings, periods: newPeriods });
                                                 }
                                             }}
-                                            className="text-center custom-number-input"
+                                            className="text-center"
                                         />
                                     </div>
                                 ))}
@@ -260,7 +260,6 @@ export default function AttendanceCalculator() {
                                 type="number"
                                 value={customSettings.percentage}
                                 onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
-                                className="custom-number-input"
                             />
                         </div>
                     </div>
@@ -285,7 +284,6 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 80" 
                             {...field}
-                            className="custom-number-input"
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -301,7 +299,6 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 100" 
                             {...field}
-                            className="custom-number-input"
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -387,13 +384,13 @@ export default function AttendanceCalculator() {
                         </TabsList>
                         <TabsContent value="periods" className="pt-4">
                             <div className="flex gap-4">
-                                <Input id="periods-leave" type="number" placeholder="No. of periods" className="flex-grow custom-number-input" />
+                                <Input id="periods-leave" type="number" placeholder="No. of periods" className="flex-grow" />
                                 <Button onClick={() => handleSimulate(parseInt((document.getElementById('periods-leave') as HTMLInputElement).value || '0'), 'periods')}>Simulate</Button>
                             </div>
                         </TabsContent>
                         <TabsContent value="days" className="pt-4">
                              <div className="flex gap-4">
-                                <Input id="days-leave" type="number" placeholder="No. of days" className="flex-grow custom-number-input" />
+                                <Input id="days-leave" type="number" placeholder="No. of days" className="flex-grow" />
                                 <Button onClick={() => handleSimulate(parseInt((document.getElementById('days-leave') as HTMLInputElement).value || '0'), 'days')}>Simulate</Button>
                             </div>
                         </TabsContent>

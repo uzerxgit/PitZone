@@ -83,24 +83,4 @@
   body {
     @apply bg-background text-foreground;
   }
-  
-  /* Custom styles for number input spinners */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-  }
-
-  .custom-number-input:hover::-webkit-inner-spin-button,
-  .custom-number-input:hover::-webkit-outer-spin-button {
-      -webkit-appearance: "inner-spin-button";
-      opacity: 1;
-      box-shadow: 0 0 5px hsl(var(--primary) / 0.8);
-  }
-
-  .custom-number-input::-webkit-inner-spin-button,
-  .custom-number-input::-webkit-outer-spin-button {
-      transition: all 0.2s ease-in-out;
-      opacity: 0.5;
-  }
 }
