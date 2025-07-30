@@ -83,4 +83,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Custom styles for number input arrows */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+      filter: invert(1);
+  }
+  .dark input[type="number"]::-webkit-inner-spin-button,
+  .dark input[type="number"]::-webkit-outer-spin-button {
+      filter: none;
+  }
 }
