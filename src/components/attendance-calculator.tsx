@@ -57,7 +57,6 @@ export default function AttendanceCalculator() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
-  const [currentEndDate, setCurrentEndDate] = useState<Date | undefined>(undefined);
   const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
 
 
@@ -72,11 +71,12 @@ export default function AttendanceCalculator() {
   });
   
   useEffect(() => {
-    if (currentEndDate) {
-        form.setValue("endDate", currentEndDate, { shouldValidate: true, shouldDirty: true });
-        setEndDateMonth(currentEndDate);
+    const { endDate } = form.getValues();
+    if (endDate && !endDateMonth) {
+        setEndDateMonth(endDate);
     }
-  }, [currentEndDate, form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.getValues().endDate]);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     if (e.target.name === 'attendedPeriods' || e.target.name === 'totalPeriods') {
@@ -148,7 +148,7 @@ export default function AttendanceCalculator() {
     let message: React.ReactNode = "You're still on track after the leave!";
      if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? `After leave, you must attend until ${format(requiredDate, "PPP")} to reach ${customSettings.percentage}%.`
+            ? <>After leave, you must attend until {format(requiredDate, "PPP")} to reach {customSettings.percentage}%.<br/>YOU SEAT IS FULL OF WATER!!</>
             : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
         message = `After leave, you can still miss ${Math.floor(canMissPeriods)} period(s).`;
@@ -351,7 +351,9 @@ export default function AttendanceCalculator() {
                                 selected={field.value} 
                                 onSelect={(date) => {
                                     field.onChange(date);
-                                    setCurrentEndDate(date);
+                                    if (date) {
+                                        setEndDateMonth(date);
+                                    }
                                 }}
                                 onMonthChange={setEndDateMonth}
                                 month={endDateMonth}
@@ -435,3 +437,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
