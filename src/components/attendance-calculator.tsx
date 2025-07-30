@@ -248,13 +248,14 @@ export default function AttendanceCalculator() {
                                         <Input
                                             id={`day-${i}`}
                                             type="number"
-                                            value={customSettings.periods[i]}
+                                            value={customSettings.periods[i] === 0 ? '' : customSettings.periods[i]}
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
-                                                newPeriods[i] = parseInt(e.target.value) || 0;
+                                                const value = e.target.value;
+                                                newPeriods[i] = value === '' ? 0 : parseInt(value, 10);
                                                 setCustomSettings({ ...customSettings, periods: newPeriods });
                                             }}
-                                            className="text-center"
+                                            className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                     </div>
                                 ))}
@@ -266,6 +267,7 @@ export default function AttendanceCalculator() {
                                 type="number"
                                 value={customSettings.percentage}
                                 onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
+                                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                         </div>
                     </div>
@@ -437,5 +439,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
