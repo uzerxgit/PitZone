@@ -78,15 +78,6 @@ export default function AttendanceCalculator() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.getValues().endDate]);
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (e.target.name === 'attendedPeriods' || e.target.name === 'totalPeriods') {
-        const value = form.getValues(e.target.name as 'attendedPeriods' | 'totalPeriods');
-        if (value === 0) {
-            form.setValue(e.target.name as 'attendedPeriods' | 'totalPeriods', undefined);
-        }
-    }
-  };
-
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
     if (isAfter(values.startDate, values.endDate)) {
         toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
@@ -248,12 +239,14 @@ export default function AttendanceCalculator() {
                                         <Input
                                             id={`day-${i}`}
                                             type="number"
-                                            value={customSettings.periods[i] === 0 ? '' : customSettings.periods[i]}
+                                            value={customSettings.periods[i]}
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
                                                 newPeriods[i] = value === '' ? 0 : parseInt(value, 10);
-                                                setCustomSettings({ ...customSettings, periods: newPeriods });
+                                                if (!isNaN(newPeriods[i])) {
+                                                    setCustomSettings({ ...customSettings, periods: newPeriods });
+                                                }
                                             }}
                                             className="text-center custom-number-input"
                                         />
@@ -292,7 +285,7 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 80" 
                             {...field}
-                            onFocus={handleFocus}
+                            className="custom-number-input"
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -308,7 +301,7 @@ export default function AttendanceCalculator() {
                             type="number" 
                             placeholder="e.g., 100" 
                             {...field}
-                            onFocus={handleFocus}
+                            className="custom-number-input"
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                             value={field.value ?? ''}
                         />
@@ -394,13 +387,13 @@ export default function AttendanceCalculator() {
                         </TabsList>
                         <TabsContent value="periods" className="pt-4">
                             <div className="flex gap-4">
-                                <Input id="periods-leave" type="number" placeholder="No. of periods" className="flex-grow" />
+                                <Input id="periods-leave" type="number" placeholder="No. of periods" className="flex-grow custom-number-input" />
                                 <Button onClick={() => handleSimulate(parseInt((document.getElementById('periods-leave') as HTMLInputElement).value || '0'), 'periods')}>Simulate</Button>
                             </div>
                         </TabsContent>
                         <TabsContent value="days" className="pt-4">
                              <div className="flex gap-4">
-                                <Input id="days-leave" type="number" placeholder="No. of days" className="flex-grow" />
+                                <Input id="days-leave" type="number" placeholder="No. of days" className="flex-grow custom-number-input" />
                                 <Button onClick={() => handleSimulate(parseInt((document.getElementById('days-leave') as HTMLInputElement).value || '0'), 'days')}>Simulate</Button>
                             </div>
                         </TabsContent>
