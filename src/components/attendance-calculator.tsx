@@ -255,7 +255,7 @@ export default function AttendanceCalculator() {
                                                 newPeriods[i] = value === '' ? 0 : parseInt(value, 10);
                                                 setCustomSettings({ ...customSettings, periods: newPeriods });
                                             }}
-                                            className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            className="text-center custom-number-input"
                                         />
                                     </div>
                                 ))}
@@ -267,7 +267,7 @@ export default function AttendanceCalculator() {
                                 type="number"
                                 value={customSettings.percentage}
                                 onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
-                                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="custom-number-input"
                             />
                         </div>
                     </div>
