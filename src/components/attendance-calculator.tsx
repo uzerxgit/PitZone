@@ -239,7 +239,7 @@ export default function AttendanceCalculator() {
                                         <Input
                                             id={`day-${i}`}
                                             type="number"
-                                            value={customSettings.periods[i] || ''}
+                                            value={customSettings.periods[i] === 0 ? '' : customSettings.periods[i]}
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
@@ -258,7 +258,7 @@ export default function AttendanceCalculator() {
                             <Label>Required Attendance Percentage</Label>
                             <Input
                                 type="number"
-                                value={customSettings.percentage}
+                                value={customSettings.percentage === 0 ? '' : customSettings.percentage}
                                 onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
                             />
                         </div>
@@ -429,3 +429,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
