@@ -243,13 +243,12 @@ export default function AttendanceCalculator() {
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
-                                                newPeriods[i] = value === '' ? 0 : parseInt(value, 10);
-                                                if (!isNaN(newPeriods[i])) {
-                                                    setCustomSettings({ ...customSettings, periods: newPeriods });
-                                                }
+                                                const parsedValue = parseInt(value, 10);
+                                                newPeriods[i] = isNaN(parsedValue) ? 0 : parsedValue;
+                                                setCustomSettings({ ...customSettings, periods: newPeriods });
                                             }}
                                             className="text-center"
-                                            placeholder="0"
+                                            placeholder="-"
                                         />
                                     </div>
                                 ))}
