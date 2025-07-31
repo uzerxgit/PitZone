@@ -59,11 +59,16 @@ const generateYearData = (year: number): YearData => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (!startDate || !endDate) return 0;
-    if (isAfter(startDate, endDate)) return 0;
+    if (!startDate || !endDate || isAfter(startDate, endDate)) {
+        return 0;
+    }
 
     let totalPeriods = 0;
     let currentDate = new Date(startDate);
+    
+    // Set time to 0 to avoid DST issues
+    currentDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
 
     while (currentDate <= endDate) {
         const yearData = generateYearData(currentDate.getFullYear());

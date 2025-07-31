@@ -28,7 +28,7 @@ const formSchema = z.object({
   totalPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
   startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date({ required_error: "End date is required." }),
-}).refine(data => !data.startDate || !data.endDate || !isAfter(data.startDate, data.endDate) || isSameDay(data.startDate, data.endDate), {
+}).refine(data => !data.startDate || !data.endDate || !isAfter(data.startDate, data.endDate), {
   message: "Start date cannot be after end date.",
   path: ["endDate"],
 }).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
@@ -213,7 +213,7 @@ export default function AttendanceCalculator() {
     setCustomizationOpen(false);
     // Recalculate if form has values
     if (form.getValues().endDate) {
-      handleCalculate(form.getValues());
+      form.handleSubmit(handleCalculate)();
     }
   };
 
