@@ -1,4 +1,4 @@
-import { isAfter } from 'date-fns';
+import { isAfter, isSameDay } from 'date-fns';
 
 type YearData = number[][];
 
@@ -55,7 +55,7 @@ const generateYearData = (): YearData => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (isAfter(startDate, endDate)) return 0;
+    if (isAfter(startDate, endDate) && !isSameDay(startDate, endDate)) return 0;
     const yearData = generateYearData();
 
     let totalPeriods = 0;
