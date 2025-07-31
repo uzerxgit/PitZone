@@ -28,6 +28,9 @@ const formSchema = z.object({
   totalPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
   startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date({ required_error: "End date is required." }),
+}).refine(data => !data.startDate || !data.endDate || !isAfter(data.startDate, data.endDate) || isSameDay(data.startDate, data.endDate), {
+  message: "Start date cannot be after end date.",
+  path: ["endDate"],
 }).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
     message: "Total periods cannot be less than attended periods.",
     path: ["totalPeriods"],
@@ -59,7 +62,7 @@ export default function AttendanceCalculator() {
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
   const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
-  const [simulationMode, setSimulationMode] = useState<'apply' | 'project'>('project');
+  const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -67,11 +70,17 @@ export default function AttendanceCalculator() {
     defaultValues: {
       attendedPeriods: undefined,
       totalPeriods: undefined,
-      startDate: new Date(),
+      startDate: undefined,
       endDate: undefined,
     },
   });
   
+  useEffect(() => {
+    // Set start date on client to avoid hydration mismatch
+    form.setValue('startDate', new Date());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const { endDate } = form.getValues();
     if (endDate && !endDateMonth) {
@@ -81,10 +90,6 @@ export default function AttendanceCalculator() {
   }, [form.getValues().endDate]);
 
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
-    if (values.startDate && values.endDate && !isSameDay(values.startDate, values.endDate) && isAfter(values.startDate, values.endDate)) {
-        toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
-        return;
-    }
     const attendedSoFar = values.attendedPeriods ?? 0;
     const totalSoFar = values.totalPeriods ?? 0;
 
@@ -478,3 +483,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    

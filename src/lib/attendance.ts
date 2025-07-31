@@ -1,5 +1,5 @@
 
-import { isAfter, isSameDay } from 'date-fns';
+import { isAfter, isSameDay, addDays, differenceInCalendarDays } from 'date-fns';
 
 type YearData = number[][];
 
@@ -59,47 +59,23 @@ const generateYearData = (year: number): YearData => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (isAfter(startDate, endDate) && !isSameDay(startDate, endDate)) return 0;
-    
-    // For single day calculation
-    if (isSameDay(startDate, endDate)) {
-        const yearData = generateYearData(startDate.getFullYear());
-        const month = startDate.getMonth();
-        const day = startDate.getDate() - 1;
-
-        if (yearData[month] && yearData[month][day] !== undefined) {
-            return yearData[month][day];
-        }
-        return 0;
-    }
+    if (!startDate || !endDate) return 0;
+    if (isAfter(startDate, endDate)) return 0;
 
     let totalPeriods = 0;
-    
-    // Handle multi-year ranges by iterating through each year
-    for (let year = startDate.getFullYear(); year <= endDate.getFullYear(); year++) {
-        const yearData = generateYearData(year);
-        const currentYearStartDate = (year === startDate.getFullYear()) ? startDate : new Date(year, 0, 1);
-        const currentYearEndDate = (year === endDate.getFullYear()) ? endDate : new Date(year, 11, 31);
+    let currentDate = new Date(startDate);
 
-        const startMonth = currentYearStartDate.getMonth();
-        const startDay = currentYearStartDate.getDate() - 1;
-        const endMonth = currentYearEndDate.getMonth();
-        const endDay = currentYearEndDate.getDate() - 1;
+    while (currentDate <= endDate) {
+        const yearData = generateYearData(currentDate.getFullYear());
+        const month = currentDate.getMonth();
+        const day = currentDate.getDate() - 1;
 
-        for (let m = startMonth; m <= endMonth; m++) {
-            const monthData = yearData[m];
-            if (!monthData) continue;
-            const start = (m === startMonth) ? startDay : 0;
-            const end = (m === endMonth) ? endDay : monthData.length - 1;
-
-            for (let d = start; d <= end; d++) {
-                if (monthData[d] !== undefined) {
-                    totalPeriods += monthData[d];
-                }
-            }
+        if (yearData[month] && yearData[month][day] !== undefined) {
+            totalPeriods += yearData[month][day];
         }
+        currentDate = addDays(currentDate, 1);
     }
-
+    
     return totalPeriods;
 };
 
@@ -108,6 +84,7 @@ export const findRequiredAttendanceDate = (
     currentTotal: number,
     checkFromDate: Date,
 ): Date | null => {
+    if (!checkFromDate) return null;
     const requiredPercentage = currentSettings.percentage / 100;
     if (currentTotal > 0 && (currentAttended / currentTotal) >= requiredPercentage) {
         return null;
@@ -141,3 +118,5 @@ export const findRequiredAttendanceDate = (
     
     return null; // Cannot reach threshold
 };
+
+    
