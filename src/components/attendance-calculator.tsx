@@ -271,7 +271,7 @@ export default function AttendanceCalculator() {
                                         <Input
                                             id={`day-${i}`}
                                             type="number"
-                                            value={customSettings.periods[i] === 0 ? '' : customSettings.periods[i]}
+                                            value={customSettings.periods[i]}
                                             onChange={(e) => {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
@@ -290,20 +290,12 @@ export default function AttendanceCalculator() {
                             <Label>Required Attendance Percentage</Label>
                             <Input
                                 type="number"
-                                value={customSettings.percentage === 0 ? '' : customSettings.percentage}
+                                value={customSettings.percentage}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const parsedValue = parseInt(value, 10);
                                     let newPercentage = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue > 100 ? 100 : parsedValue;
-                                    if (value === '') {
-                                        newPercentage = 0;
-                                    }
                                     setCustomSettings({ ...customSettings, percentage: newPercentage });
-                                }}
-                                onBlur={(e) => {
-                                     if(e.target.value === '') {
-                                         setCustomSettings({...customSettings, percentage: 0});
-                                     }
                                 }}
                             />
                         </div>

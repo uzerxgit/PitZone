@@ -59,7 +59,7 @@ const generateYearData = (year: number): YearData => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (isAfter(startDate, endDate)) return 0;
+    if (isAfter(startDate, endDate) && !isSameDay(startDate, endDate)) return 0;
     
     // For single day calculation
     if (isSameDay(startDate, endDate)) {
