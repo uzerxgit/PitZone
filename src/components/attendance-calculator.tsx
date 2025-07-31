@@ -70,16 +70,10 @@ export default function AttendanceCalculator() {
     defaultValues: {
       attendedPeriods: undefined,
       totalPeriods: undefined,
-      startDate: undefined,
+      startDate: new Date(),
       endDate: undefined,
     },
   });
-  
-  useEffect(() => {
-    // Set start date on client to avoid hydration mismatch
-    form.setValue('startDate', new Date());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const { endDate } = form.getValues();

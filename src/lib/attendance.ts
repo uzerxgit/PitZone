@@ -70,7 +70,9 @@ export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number 
     currentDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
-    while (currentDate <= endDate) {
+    const diffDays = differenceInCalendarDays(endDate, currentDate);
+
+    for (let i = 0; i <= diffDays; i++) {
         const yearData = generateYearData(currentDate.getFullYear());
         const month = currentDate.getMonth();
         const day = currentDate.getDate() - 1;
