@@ -81,7 +81,7 @@ export default function AttendanceCalculator() {
   }, [form.getValues().endDate]);
 
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
-    if (isAfter(values.startDate, values.endDate)) {
+    if (values.startDate && values.endDate && isAfter(values.startDate, values.endDate)) {
         toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
         return;
     }
@@ -294,7 +294,10 @@ export default function AttendanceCalculator() {
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const parsedValue = parseInt(value, 10);
-                                    const newPercentage = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue > 100 ? 100 : parsedValue;
+                                    let newPercentage = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue > 100 ? 100 : parsedValue;
+                                    if (value === '') {
+                                        newPercentage = 0;
+                                    }
                                     setCustomSettings({ ...customSettings, percentage: newPercentage });
                                 }}
                                 onBlur={(e) => {
@@ -483,3 +486,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
