@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, isAfter } from "date-fns";
+import { format, isAfter, isSameDay } from "date-fns";
 import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ export default function AttendanceCalculator() {
   }, [form.getValues().endDate]);
 
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
-    if (isAfter(values.startDate, values.endDate)) {
+    if (!isSameDay(values.startDate, values.endDate) && isAfter(values.startDate, values.endDate)) {
         toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
         return;
     }
@@ -259,7 +259,11 @@ export default function AttendanceCalculator() {
                             <Input
                                 type="number"
                                 value={customSettings.percentage === 0 ? '' : customSettings.percentage}
-                                onChange={(e) => setCustomSettings({ ...customSettings, percentage: parseInt(e.target.value) || 0 })}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const parsedValue = parseInt(value, 10);
+                                    setCustomSettings({ ...customSettings, percentage: isNaN(parsedValue) ? 0 : parsedValue });
+                                }}
                             />
                         </div>
                     </div>
@@ -429,5 +433,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
