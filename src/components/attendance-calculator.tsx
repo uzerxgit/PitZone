@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, addDays } from "date-fns";
+import { format, addDays, isSameDay } from "date-fns";
 import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -85,7 +85,10 @@ export default function AttendanceCalculator() {
     const attendedSoFar = values.attendedPeriods ?? 0;
     const totalSoFar = values.totalPeriods ?? 0;
 
-    const periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
+    const periodsInDateRange = isSameDay(values.startDate, values.endDate) 
+        ? 0 
+        : calculatePeriodsInRange(values.startDate, values.endDate);
+        
     const finalTotal = totalSoFar + periodsInDateRange;
     const finalAttended = attendedSoFar + periodsInDateRange;
 
@@ -480,3 +483,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
