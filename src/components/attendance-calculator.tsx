@@ -159,7 +159,7 @@ export default function AttendanceCalculator() {
         attendedPeriods: attendedPeriods ?? 0,
         totalPeriods: totalPeriods ?? 0,
         startDate: format(startDate, 'yyyy-MM-dd'),
-        endDate: format(endDate, 'yyyy-MM-dd'),
+        endDate: format(endDate || startDate, 'yyyy-MM-dd'),
       });
       setAiAdvice(result.recommendation);
     } catch (e) {
