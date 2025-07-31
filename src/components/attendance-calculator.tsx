@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, addDays, isSameDay } from "date-fns";
+import { format, addDays, isSameDay, isAfter } from "date-fns";
 import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,12 +30,12 @@ const formSchema = z.object({
   endDate: z.date({ required_error: "End date is required." }),
 }).refine(data => {
     if (data.startDate && data.endDate) {
-        return data.endDate.getTime() >= data.startDate.getTime();
+        return !isAfter(data.startDate, data.endDate);
     }
     return true;
 }, {
-  message: "End date must be on or after the start date.",
-  path: ["endDate"],
+  message: "Start date cannot be after end date.",
+  path: ["startDate"],
 }).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
     message: "Total periods cannot be less than attended periods.",
     path: ["totalPeriods"],
@@ -69,7 +69,11 @@ export default function AttendanceCalculator() {
   const [endDateMonth, setEndDateMonth] = useState<Date>(new Date());
   const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
   const [simulationLeaveAmount, setSimulationLeaveAmount] = useState<string>('');
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -85,9 +89,7 @@ export default function AttendanceCalculator() {
     const attendedSoFar = values.attendedPeriods ?? 0;
     const totalSoFar = values.totalPeriods ?? 0;
 
-    const periodsInDateRange = isSameDay(values.startDate, values.endDate) 
-        ? 0 
-        : calculatePeriodsInRange(values.startDate, values.endDate);
+    const periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
         
     const finalTotal = totalSoFar + periodsInDateRange;
     const finalAttended = attendedSoFar + periodsInDateRange;
@@ -217,6 +219,10 @@ export default function AttendanceCalculator() {
     }
   };
 
+  if (!isMounted) {
+    return null;
+  }
+  
   const ResultCard = ({ res, title, icon }: { res: ResultState, title: string, icon: React.ReactNode }) => {
     if (!res) return null;
     const isBelowThreshold = res.percentage < customSettings.percentage;
@@ -483,5 +489,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
