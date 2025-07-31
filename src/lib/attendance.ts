@@ -56,8 +56,25 @@ const generateYearData = (): YearData => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (isAfter(startDate, endDate)) return 0;
     const yearData = generateYearData();
+    if (isSameDay(startDate, endDate)) {
+        const month = startDate.getMonth();
+        const day = startDate.getDate() - 1;
+        const dayOfWeek = startDate.getDay();
+        
+        // Use custom settings if available for that day, otherwise check generated data
+        if(currentSettings.periods[dayOfWeek] !== undefined) {
+            return currentSettings.periods[dayOfWeek];
+        }
+        
+        if (yearData[month] && yearData[month][day] !== undefined) {
+            return yearData[month][day];
+        }
+        return 0;
+    }
+
+    if (isAfter(startDate, endDate)) return 0;
+
 
     let totalPeriods = 0;
     const startMonth = startDate.getMonth();
