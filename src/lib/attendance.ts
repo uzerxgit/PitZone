@@ -70,20 +70,20 @@ const generateYearData = (year: number): number[][] => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    const sDate = startOfDay(startDate);
-    const eDate = startOfDay(endDate);
-
-    if (isAfter(sDate, eDate)) {
+    if (!startDate || !endDate || isAfter(startDate, endDate)) {
         return 0;
     }
+
+    const sDate = startOfDay(startDate);
+    const eDate = startOfDay(endDate);
 
     let totalPeriods = 0;
     let currentDate = new Date(sDate);
 
-    while (currentDate <= eDate) {
+    while (currentDate.getTime() <= eDate.getTime()) {
         const yearData = generateYearData(currentDate.getFullYear());
         const month = currentDate.getMonth();
-        const day = currentDate.getDate() - 1;
+        const day = currentDate.getDate() - 1; // day is 0-indexed
 
         if (yearData[month]?.[day] !== undefined) {
             totalPeriods += yearData[month][day];

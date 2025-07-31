@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, isAfter, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,8 @@ const formSchema = z.object({
   totalPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
   startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date({ required_error: "End date is required." }),
-}).refine(data => !data.startDate || !data.endDate || !isAfter(data.startDate, data.endDate), {
-  message: "Start date cannot be after end date.",
+}).refine(data => data.endDate.getTime() >= data.startDate.getTime(), {
+  message: "End date must be on or after the start date.",
   path: ["endDate"],
 }).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
     message: "Total periods cannot be less than attended periods.",
