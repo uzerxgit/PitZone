@@ -1,3 +1,4 @@
+
 // src/ai/flows/attendance-advisor.ts
 'use server';
 
@@ -36,15 +37,18 @@ const prompt = ai.definePrompt({
   name: 'attendanceAdvisorPrompt',
   input: {schema: AttendanceAdvisorInputSchema},
   output: {schema: AttendanceAdvisorOutputSchema},
-  prompt: `You are an AI attendance advisor for university students. Your goal is to provide personalized recommendations on how many periods to attend in the future, including suggestions for balancing study and well-being.
+  prompt: `You are an AI attendance advisor for university students. Your goal is to provide personalized, actionable, and encouraging recommendations.
 
-  Current Attendance:
+  Current Attendance Details:
   - Attended Periods: {{attendedPeriods}}
   - Total Periods: {{totalPeriods}}
   - Start Date: {{startDate}}
   - End Date: {{endDate}}
 
-  Based on this information, provide a recommendation to the student. Consider suggesting a well-being activity (e.g., taking a break, exercising) only if it will not reduce attendance below 75%. Be concise and encouraging.
+  Based on this information, provide a recommendation to the student.
+  - If attendance is already low (below 75%), provide a clear, encouraging plan to improve it. Suggest how many classes they need to attend consecutively to get back on track.
+  - If attendance is high, suggest how many periods they can miss while staying above 75%. You can also recommend a well-being activity (e.g., taking a break, exercising) if they have a comfortable buffer.
+  - Always be concise, positive, and motivating.
 
   Recommendation:`,
 });
