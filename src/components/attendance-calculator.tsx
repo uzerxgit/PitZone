@@ -155,13 +155,13 @@ export default function AttendanceCalculator() {
     const { startDate, endDate, attendedPeriods, totalPeriods } = form.getValues();
 
     try {
-      const result = await attendanceAdvisor({
+      const res = await attendanceAdvisor({
         attendedPeriods: attendedPeriods ?? 0,
         totalPeriods: totalPeriods ?? 0,
         startDate: format(startDate, 'yyyy-MM-dd'),
         endDate: format(endDate || startDate, 'yyyy-MM-dd'),
       });
-      setAiAdvice(result.recommendation);
+      setAiAdvice(res.recommendation);
     } catch (e) {
       toast({
         title: "Error getting AI advice",
@@ -175,7 +175,8 @@ export default function AttendanceCalculator() {
   const handleSettingsSave = () => {
     setCustomPeriodSettings(customSettings);
     setCustomizationOpen(false);
-    if(form.formState.isDirty && form.formState.isValid) {
+    // Recalculate if form has values
+    if (form.getValues().endDate) {
       handleCalculate(form.getValues());
     }
   };
@@ -244,7 +245,7 @@ export default function AttendanceCalculator() {
                                                 const newPeriods = [...customSettings.periods];
                                                 const value = e.target.value;
                                                 const parsedValue = parseInt(value, 10);
-                                                newPeriods[i] = isNaN(parsedValue) ? 0 : parsedValue;
+                                                newPeriods[i] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
                                                 setCustomSettings({ ...customSettings, periods: newPeriods });
                                             }}
                                             className="text-center"
@@ -262,7 +263,13 @@ export default function AttendanceCalculator() {
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     const parsedValue = parseInt(value, 10);
-                                    setCustomSettings({ ...customSettings, percentage: isNaN(parsedValue) ? 0 : parsedValue });
+                                    const newPercentage = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue > 100 ? 100 : parsedValue;
+                                    setCustomSettings({ ...customSettings, percentage: newPercentage });
+                                }}
+                                onBlur={(e) => {
+                                     if(e.target.value === '') {
+                                         setCustomSettings({...customSettings, percentage: 0});
+                                     }
                                 }}
                             />
                         </div>
@@ -433,5 +440,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
