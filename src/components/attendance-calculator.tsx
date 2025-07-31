@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, isAfter, isSameDay, addDays } from "date-fns";
-import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, X, Forward } from "lucide-react";
+import { format, isAfter, addDays } from "date-fns";
+import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -63,6 +63,7 @@ export default function AttendanceCalculator() {
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
   const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
   const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
+  const [simulationLeaveAmount, setSimulationLeaveAmount] = useState<string>('');
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,7 +89,7 @@ export default function AttendanceCalculator() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.getValues().endDate]);
-
+  
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
     const attendedSoFar = values.attendedPeriods ?? 0;
     const totalSoFar = values.totalPeriods ?? 0;
@@ -98,7 +99,7 @@ export default function AttendanceCalculator() {
     const finalAttended = attendedSoFar + periodsInDateRange;
 
     if (finalTotal <= 0) {
-        toast({ title: "No Periods Found", description: "Total periods are zero. Cannot calculate attendance.", variant: "destructive" });
+        toast({ title: "No Periods Found", description: "Total periods are zero for the selected range. Check your custom settings.", variant: "destructive" });
         setResult(null);
         return;
     }
@@ -111,10 +112,10 @@ export default function AttendanceCalculator() {
     let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? <>You need to attend classes until {format(requiredDate, "PPP")} to reach {customSettings.percentage}% attendance.<br/>STAY OUT! STAY OUT! STAY OUT!</>
+            ? <>You need to attend classes until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}% attendance.<br/>STAY OUT! STAY OUT! STAY OUT!</>
             : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = <>{`You can afford to miss ${Math.floor(canMissPeriods)} period(s) and maintain ${customSettings.percentage}% attendance.`}<br/>GOLAZOO!</>;
+        message = <>{`You can afford to miss <strong>${Math.floor(canMissPeriods)}</strong> period(s) and maintain ${customSettings.percentage}% attendance.`}<br/>GOLAZOO!</>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -122,17 +123,25 @@ export default function AttendanceCalculator() {
     setAiAdvice(null);
   };
   
-  const handleSimulate = (leaveAmount: number, type: 'periods' | 'days') => {
+  const handleSimulate = (type: 'periods' | 'days') => {
     if (!result) {
         toast({ title: "No Calculation Found", description: "Please calculate your attendance first.", variant: "destructive" });
         return;
     }
+    
+    const leaveAmount = parseInt(simulationLeaveAmount) || 0;
+    if (leaveAmount <= 0) {
+        toast({ title: "Invalid Input", description: "Please enter a positive number for leave.", variant: "destructive" });
+        return;
+    }
 
     let simAttended: number, simTotal: number;
+    const { endDate } = form.getValues();
+    if (!endDate) return;
 
     if (simulationMode === 'apply') {
         const periodsToLeave = type === 'days' 
-            ? calculatePeriodsInRange(form.getValues().endDate, addDays(form.getValues().endDate, leaveAmount -1))
+            ? calculatePeriodsInRange(endDate, addDays(endDate, leaveAmount -1))
             : leaveAmount;
         
         simAttended = result.finalAttended - periodsToLeave;
@@ -144,9 +153,6 @@ export default function AttendanceCalculator() {
         }
 
     } else { // project
-        const { endDate } = form.getValues();
-        if (!endDate) return;
-
         let periodsToLeave;
         if (type === 'days') {
             const simulationStartDate = addDays(endDate, 1);
@@ -169,16 +175,15 @@ export default function AttendanceCalculator() {
     const percentage = (simAttended / simTotal) * 100;
     const periodsToMaintain = Math.ceil(simTotal * (customSettings.percentage / 100));
     const canMissPeriods = simAttended - periodsToMaintain;
-    const { endDate } = form.getValues();
     const requiredDate = findRequiredAttendanceDate(simAttended, simTotal, endDate);
     
     let message: React.ReactNode = "You're still on track after the leave!";
      if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? <>After leave, you must attend until {format(requiredDate, "PPP")} to reach {customSettings.percentage}%.<br/>YOU SEAT IS FULL OF WATER!!</>
+            ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.<br/>YOUR SEAT IS FULL OF WATER!!</>
             : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = `After leave, you can still miss ${Math.floor(canMissPeriods)} period(s).`;
+        message = `After leave, you can still miss <strong>${Math.floor(canMissPeriods)}</strong> period(s).`;
     }
 
     setSimulationResult({ finalAttended: Math.floor(simAttended), finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -196,6 +201,7 @@ export default function AttendanceCalculator() {
         totalPeriods: totalPeriods ?? 0,
         startDate: format(startDate, 'yyyy-MM-dd'),
         endDate: format(endDate || startDate, 'yyyy-MM-dd'),
+        requiredPercentage: customSettings.percentage,
       });
       setAiAdvice(res.recommendation);
     } catch (e) {
@@ -212,7 +218,7 @@ export default function AttendanceCalculator() {
     setCustomPeriodSettings(customSettings);
     setCustomizationOpen(false);
     // Recalculate if form has values
-    if (form.getValues().endDate) {
+    if (form.formState.isSubmitted) {
       form.handleSubmit(handleCalculate)();
     }
   };
@@ -256,7 +262,7 @@ export default function AttendanceCalculator() {
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Radio Check!</CardTitle>
-              <CardDescription>Enter your current attendance and select the date range for calculation.</CardDescription>
+              <CardDescription>Enter current attendance and select a date range for calculation.</CardDescription>
             </div>
              <Dialog open={isCustomizationOpen} onOpenChange={setCustomizationOpen}>
                 <DialogTrigger asChild>
@@ -418,10 +424,10 @@ export default function AttendanceCalculator() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
-                            <CardDescription>See how taking a leave affects your lap time.</CardDescription>
+                            <CardDescription>See how taking leave affects your lap time.</CardDescription>
                         </div>
                          <div className="flex items-center space-x-2">
-                            <Label htmlFor="sim-mode" className="text-sm font-medium">{simulationMode === 'apply' ? 'Apply Leave' : 'Project Future'}</Label>
+                            <Label htmlFor="sim-mode" className="text-sm font-medium">{simulationMode === 'project' ? 'Project Future' : 'Apply Leave'}</Label>
                             <Switch 
                                 id="sim-mode" 
                                 checked={simulationMode === 'project'}
@@ -431,21 +437,21 @@ export default function AttendanceCalculator() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="periods">
+                    <Tabs defaultValue="days">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="periods">By Periods</TabsTrigger>
                             <TabsTrigger value="days">By Days</TabsTrigger>
+                            <TabsTrigger value="periods">By Periods</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="periods" className="pt-4">
-                            <div className="flex gap-4">
-                                <Input id="periods-leave" type="number" placeholder="No. of periods" className="flex-grow" />
-                                <Button onClick={() => handleSimulate(parseInt((document.getElementById('periods-leave') as HTMLInputElement).value || '0'), 'periods')}>Simulate</Button>
-                            </div>
-                        </TabsContent>
                         <TabsContent value="days" className="pt-4">
                              <div className="flex gap-4">
-                                <Input id="days-leave" type="number" placeholder="No. of days" className="flex-grow" />
-                                <Button onClick={() => handleSimulate(parseInt((document.getElementById('days-leave') as HTMLInputElement).value || '0'), 'days')}>Simulate</Button>
+                                <Input type="number" placeholder="No. of days" className="flex-grow" value={simulationLeaveAmount} onChange={(e) => setSimulationLeaveAmount(e.target.value)} />
+                                <Button onClick={() => handleSimulate('days')}>Simulate</Button>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="periods" className="pt-4">
+                            <div className="flex gap-4">
+                                <Input type="number" placeholder="No. of periods" className="flex-grow" value={simulationLeaveAmount} onChange={(e) => setSimulationLeaveAmount(e.target.value)} />
+                                <Button onClick={() => handleSimulate('periods')}>Simulate</Button>
                             </div>
                         </TabsContent>
                     </Tabs>
@@ -483,5 +489,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    

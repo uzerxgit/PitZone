@@ -21,6 +21,7 @@ const AttendanceAdvisorInputSchema = z.object({
   totalPeriods: z.number().describe('The total number of periods so far.'),
   startDate: z.string().describe('The start date of the attendance period (YYYY-MM-DD).'),
   endDate: z.string().describe('The end date of the attendance period (YYYY-MM-DD).'),
+  requiredPercentage: z.number().describe('The required attendance percentage.'),
 });
 export type AttendanceAdvisorInput = z.infer<typeof AttendanceAdvisorInputSchema>;
 
@@ -44,11 +45,13 @@ const prompt = ai.definePrompt({
   - Total Periods: {{totalPeriods}}
   - Start Date: {{startDate}}
   - End Date: {{endDate}}
+  - Required Attendance: {{requiredPercentage}}%
 
   Based on this information, provide a recommendation to the student.
-  - If attendance is already low (below 75%), provide a clear, encouraging plan to improve it. Suggest how many classes they need to attend consecutively to get back on track.
-  - If attendance is high, suggest how many periods they can miss while staying above 75%. You can also recommend a well-being activity (e.g., taking a break, exercising) if they have a comfortable buffer.
-  - Always be concise, positive, and motivating.
+  - If attendance is already low (below {{requiredPercentage}}%), provide a clear, encouraging plan to improve it. Suggest how many classes they need to attend consecutively to get back on track. Be specific and motivating.
+  - If attendance is high, suggest how many periods they can miss while staying above {{requiredPercentage}}%. You can also recommend a well-being activity (e.g., taking a break, exercising) if they have a comfortable buffer.
+  - Always be concise, positive, and motivating. Use a friendly and supportive tone.
+  - Frame the advice in a way that is helpful and not judgmental.
 
   Recommendation:`,
 });

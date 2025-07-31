@@ -13,14 +13,14 @@ export default function Home() {
              </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Check you league stats, Manage, Rollout
+            Check your league stats, Manage, Rollout
           </p>
         </header>
         
         <AttendanceCalculator />
 
         <footer className="text-center text-muted-foreground/80 text-sm pt-8">
-          <p>Make every leave count. Plan smart, Play well</p>
+          <p>Make every leave count. Plan smart, Play well.</p>
         </footer>
       </div>
     </main>
