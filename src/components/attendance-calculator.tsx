@@ -59,7 +59,7 @@ export default function AttendanceCalculator() {
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
   const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
-  const [simulationMode, setSimulationMode] = useState<'apply' | 'project'>('apply');
+  const [simulationMode, setSimulationMode] = useState<'apply' | 'project'>('project');
 
 
   const form = useForm<z.infer<typeof formSchema>>({
