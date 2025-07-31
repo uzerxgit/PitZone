@@ -28,7 +28,12 @@ const formSchema = z.object({
   totalPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
   startDate: z.date({ required_error: "Start date is required." }),
   endDate: z.date({ required_error: "End date is required." }),
-}).refine(data => data.endDate.getTime() >= data.startDate.getTime(), {
+}).refine(data => {
+    if (data.startDate && data.endDate) {
+        return data.endDate.getTime() >= data.startDate.getTime();
+    }
+    return true;
+}, {
   message: "End date must be on or after the start date.",
   path: ["endDate"],
 }).refine(data => (data.totalPeriods ?? 0) >= (data.attendedPeriods ?? 0), {
@@ -61,7 +66,7 @@ export default function AttendanceCalculator() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
-  const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
+  const [endDateMonth, setEndDateMonth] = useState<Date>(new Date());
   const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
   const [simulationLeaveAmount, setSimulationLeaveAmount] = useState<string>('');
 
@@ -71,24 +76,10 @@ export default function AttendanceCalculator() {
     defaultValues: {
       attendedPeriods: undefined,
       totalPeriods: undefined,
-      startDate: undefined,
-      endDate: undefined,
+      startDate: new Date(),
+      endDate: new Date(),
     },
   });
-
-  useEffect(() => {
-    // Set start date only on the client to avoid hydration errors
-    form.setValue('startDate', new Date());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const { endDate } = form.getValues();
-    if (endDate && !endDateMonth) {
-        setEndDateMonth(endDate);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.getValues().endDate]);
   
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
     const attendedSoFar = values.attendedPeriods ?? 0;
