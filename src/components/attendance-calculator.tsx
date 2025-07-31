@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, isAfter, isSameDay } from "date-fns";
-import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, X } from "lucide-react";
+import { format, isAfter, isSameDay, addDays } from "date-fns";
+import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, X, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
@@ -58,6 +59,7 @@ export default function AttendanceCalculator() {
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
   const [endDateMonth, setEndDateMonth] = useState<Date | undefined>(undefined);
+  const [simulationMode, setSimulationMode] = useState<'apply' | 'project'>('apply');
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -120,18 +122,47 @@ export default function AttendanceCalculator() {
         toast({ title: "No Calculation Found", description: "Please calculate your attendance first.", variant: "destructive" });
         return;
     }
-    
-    const periodsToLeave = type === 'days' ? leaveAmount * (customSettings.periods.reduce((a,b)=>a+b,0)/customSettings.periods.filter(p=>p>0).length) : leaveAmount;
-    const simAttended = result.finalAttended - periodsToLeave;
-    const simTotal = result.finalTotal;
 
-    if (simAttended < 0) {
-        toast({ title: "Invalid Simulation", description: "Cannot take more leave than attended periods.", variant: "destructive" });
+    let simAttended: number, simTotal: number;
+
+    if (simulationMode === 'apply') {
+        const periodsToLeave = type === 'days' 
+            ? calculatePeriodsInRange(form.getValues().endDate, addDays(form.getValues().endDate, leaveAmount -1))
+            : leaveAmount;
+        
+        simAttended = result.finalAttended - periodsToLeave;
+        simTotal = result.finalTotal;
+        
+        if (simAttended < 0) {
+            toast({ title: "Invalid Simulation", description: "Cannot take more leave than attended periods.", variant: "destructive" });
+            return;
+        }
+
+    } else { // project
+        const { endDate } = form.getValues();
+        if (!endDate) return;
+
+        let periodsToLeave;
+        if (type === 'days') {
+            const simulationStartDate = addDays(endDate, 1);
+            const simulationEndDate = addDays(endDate, leaveAmount);
+            periodsToLeave = calculatePeriodsInRange(simulationStartDate, simulationEndDate);
+        } else {
+            periodsToLeave = leaveAmount;
+        }
+        
+        simAttended = result.finalAttended;
+        simTotal = result.finalTotal + periodsToLeave;
+    }
+
+
+    if (simTotal <= 0) {
+        toast({ title: "Invalid Simulation", description: "Total periods are zero.", variant: "destructive" });
         return;
     }
 
     const percentage = (simAttended / simTotal) * 100;
-    const periodsToMaintain = result.periodsToMaintain;
+    const periodsToMaintain = Math.ceil(simTotal * (customSettings.percentage / 100));
     const canMissPeriods = simAttended - periodsToMaintain;
     const { endDate } = form.getValues();
     const requiredDate = findRequiredAttendanceDate(simAttended, simTotal, endDate);
@@ -380,12 +411,24 @@ export default function AttendanceCalculator() {
         <>
             <ResultCard res={result} title="Calculation Result" icon={<TrendingUp className="text-primary" />} />
             
-            {simulationResult && <ResultCard res={simulationResult} title="Simulation Result" icon={<TrendingDown className="text-accent" />} />}
+            {simulationResult && <ResultCard res={simulationResult} title="Simulation Result" icon={simulationMode === 'apply' ? <TrendingDown className="text-accent" /> : <Forward className="text-accent" />} />}
 
             <Card className="shadow-lg">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
-                    <CardDescription>See how taking a leave affects your lap time.</CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
+                            <CardDescription>See how taking a leave affects your lap time.</CardDescription>
+                        </div>
+                         <div className="flex items-center space-x-2">
+                            <Label htmlFor="sim-mode" className="text-sm font-medium">{simulationMode === 'apply' ? 'Apply Leave' : 'Project Future'}</Label>
+                            <Switch 
+                                id="sim-mode" 
+                                checked={simulationMode === 'project'}
+                                onCheckedChange={(checked) => setSimulationMode(checked ? 'project' : 'apply')}
+                            />
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="periods">
