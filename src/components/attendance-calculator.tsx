@@ -81,7 +81,7 @@ export default function AttendanceCalculator() {
   }, [form.getValues().endDate]);
 
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
-    if (!isSameDay(values.startDate, values.endDate) && isAfter(values.startDate, values.endDate)) {
+    if (isAfter(values.startDate, values.endDate)) {
         toast({ title: "Invalid Date Range", description: "Start date cannot be after end date.", variant: "destructive" });
         return;
     }
