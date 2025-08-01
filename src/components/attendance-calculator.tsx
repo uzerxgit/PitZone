@@ -119,9 +119,11 @@ export default function AttendanceCalculator() {
 
     let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
-        message = <>YOUR SEAT is FULL OF Water</>;
+        message = requiredDate 
+            ? <>You must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
+            : `You may not reach ${customSettings.percentage}% attendance.`;
     } else if (canMissPeriods > 0) {
-        message = <>STAY OUT STAY OUT STAY OUT</>;
+        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.</>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
