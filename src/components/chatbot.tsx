@@ -55,6 +55,7 @@ export default function Chatbot({ result, customSettings }: ChatbotProps) {
       const botMessage: Message = { role: 'bot', content: aiResponse };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
+      console.error("Chatbot error:", error);
       const errorMessage: Message = {
         role: 'bot',
         content: "Sorry, I'm having trouble connecting. Please try again later.",
@@ -91,7 +92,7 @@ export default function Chatbot({ result, customSettings }: ChatbotProps) {
                   className={cn(
                     'max-w-xs rounded-lg px-4 py-2 text-sm md:max-w-md',
                     message.role === 'user'
-                      ? 'bg-primary/20 text-primary-foreground'
+                      ? 'bg-primary/20'
                       : 'bg-muted'
                   )}
                 >
