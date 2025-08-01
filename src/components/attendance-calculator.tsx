@@ -82,7 +82,7 @@ export default function AttendanceCalculator() {
       attendedPeriods: undefined,
       totalPeriods: undefined,
       startDate: new Date(),
-      endDate: addDays(new Date(), 1),
+      endDate: new Date(),
     },
   });
 
@@ -99,10 +99,8 @@ export default function AttendanceCalculator() {
     const totalSoFar = values.totalPeriods ?? 0;
 
     let periodsInDateRange = 0;
-    if (values.startDate && values.endDate) {
-      if (!isAfter(startOfDay(values.startDate), startOfDay(values.endDate))) {
-        periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
-      }
+    if (values.startDate && values.endDate && !isAfter(startOfDay(values.startDate), startOfDay(values.endDate))) {
+      periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
     }
 
     const finalTotal = totalSoFar + periodsInDateRange;
@@ -121,11 +119,9 @@ export default function AttendanceCalculator() {
 
     let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
-        message = requiredDate 
-            ? <>You need to attend classes until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}% attendance.</>
-            : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
+        message = <>YOUR SEAT is FULL OF Water</>;
     } else if (canMissPeriods > 0) {
-        message = <>{`You can afford to miss <strong>${Math.floor(canMissPeriods)}</strong> period(s) and maintain ${customSettings.percentage}% attendance.`}</>;
+        message = <>STAY OUT STAY OUT STAY OUT</>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -430,7 +426,7 @@ export default function AttendanceCalculator() {
                                 mode="single" 
                                 selected={field.value} 
                                 onSelect={field.onChange}
-                                month={form.getValues().endDate || form.getValues().startDate}
+                                month={form.getValues().endDate || form.getValues().startDate || new Date()}
                                 initialFocus
                             />
                         </PopoverContent>
@@ -440,7 +436,7 @@ export default function AttendanceCalculator() {
                 )} />
               </div>
               <Button type="submit" className="w-full" size="lg">
-                <Calculator className="mr-2 h-5 w-5" /> Calculate Attendance
+                <Calculator className="mr-2 h-5 w-5" /> GOLAZO
               </Button>
             </form>
           </Form>
@@ -497,5 +493,3 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
-
-    
