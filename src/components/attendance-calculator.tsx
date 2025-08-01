@@ -436,7 +436,7 @@ export default function AttendanceCalculator() {
                 )} />
               </div>
               <Button type="submit" className="w-full" size="lg">
-                <Calculator className="mr-2 h-5 w-5" /> GOLAZO
+                <Calculator className="mr-2 h-5 w-5" /> Calculate
               </Button>
             </form>
           </Form>
