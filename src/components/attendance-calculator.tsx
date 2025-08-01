@@ -123,7 +123,7 @@ export default function AttendanceCalculator() {
             ? <>You must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
             : `You may not reach ${customSettings.percentage}% attendance.`;
     } else if (canMissPeriods > 0) {
-        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.</>;
+        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.<br/><strong>STAY OUT! STAY OUT! STAY OUT!</strong></>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
