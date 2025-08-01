@@ -117,14 +117,16 @@ export default function AttendanceCalculator() {
     const canMissPeriods = finalAttended - periodsToMaintain;
     const requiredDate = findRequiredAttendanceDate(finalAttended, finalTotal, values.endDate);
 
-    let message: React.ReactNode = "You're on track! Keep it up.";
+    let message: React.ReactNode;
     if (percentage < customSettings.percentage) {
         const baseMessage = requiredDate 
             ? <>You must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
             : <>You may not reach {customSettings.percentage}% attendance.</>;
         message = <>{baseMessage}<br/><strong>YOUR SEAT IS FULL OF WATER</strong></>;
     } else if (canMissPeriods > 0) {
-        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.<br/><strong>GOLAZOO!!</strong></>;
+        message = <>{`You can miss up to `}<strong>{Math.floor(canMissPeriods)}</strong>{` period(s) and stay above ${customSettings.percentage}%.`}<br/><strong>GOLAZOO!!</strong></>;
+    } else {
+        message = "You're on track! Keep it up.";
     }
 
 
@@ -211,7 +213,7 @@ export default function AttendanceCalculator() {
     const canMissPeriods = simAttended - periodsToMaintain;
     const requiredDate = findRequiredAttendanceDate(simAttended, simTotal, endDate);
     
-    let message: React.ReactNode = "You're still on track after the leave!";
+    let message: React.ReactNode;
      if (percentage < customSettings.percentage) {
         const baseMessage = requiredDate 
             ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
@@ -219,6 +221,8 @@ export default function AttendanceCalculator() {
         message = <>{baseMessage}<br/><strong>STAY OUT! STAY OUT! STAY OUT!</strong></>;
     } else if (canMissPeriods > 0) {
         message = <>After leave, you can still miss <strong>{Math.floor(canMissPeriods)}</strong> period(s).</>;
+    } else {
+        message = "You're still on track after the leave!";
     }
 
     setSimulationResult({ finalAttended: Math.floor(simAttended), finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
@@ -459,7 +463,7 @@ export default function AttendanceCalculator() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
-                            <CardDescription>See how taking leave affects your attendance.</CardDescription>
+                            <CardDescription>See how taking leave affects your laptime.</CardDescription>
                         </div>
                          <div className="flex items-center space-x-2">
                             <Label htmlFor="sim-mode" className="text-sm font-medium">{simulationMode === 'project' ? 'Project Future' : 'Apply Leave'}</Label>
