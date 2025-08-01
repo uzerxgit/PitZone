@@ -70,7 +70,7 @@ const generateYearData = (year: number): number[][] => {
 };
 
 export const calculatePeriodsInRange = (startDate: Date, endDate: Date): number => {
-    if (!startDate || !endDate || isAfter(startDate, endDate)) {
+    if (!startDate || !endDate || isAfter(startOfDay(startDate), startOfDay(endDate))) {
         return 0;
     }
 

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format, addDays, isSameDay, isAfter, startOfDay } from "date-fns";
-import { CalendarIcon, Calculator, TrendingUp, TrendingDown, Info, Settings, Forward } from "lucide-react";
+import { CalendarIcon, Calculator, TrendingUp, TrendingDown, Info, Settings, Forward, Bot, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,7 +21,9 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
 import { Label } from "@/components/ui/label";
-import Chatbot from "./chatbot";
+import { getAttendanceAdvice } from "@/ai/flows/attendance-advisor";
+import { AttendanceRequest } from "@/ai/schemas/attendance-request";
+
 
 const formSchema = z.object({
   attendedPeriods: z.coerce.number().min(0, "Cannot be negative").optional(),
@@ -64,10 +66,11 @@ export default function AttendanceCalculator() {
   const [simulationResult, setSimulationResult] = useState<ResultState>(null);
   const [customSettings, setCustomSettings] = useState<CustomPeriodSettings>(initialCustomSettings);
   const [isCustomizationOpen, setCustomizationOpen] = useState(false);
-  const [endDateMonth, setEndDateMonth] = useState<Date>(new Date());
   const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
   const [simulationLeaveAmount, setSimulationLeaveAmount] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState<string>("");
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -79,21 +82,29 @@ export default function AttendanceCalculator() {
       attendedPeriods: undefined,
       totalPeriods: undefined,
       startDate: new Date(),
-      endDate: new Date(),
+      endDate: addDays(new Date(), 1),
     },
   });
-  
+
+  useEffect(() => {
+    if (isMounted) {
+      const today = new Date();
+      form.setValue('startDate', today);
+      form.setValue('endDate', today);
+    }
+  }, [isMounted, form]);
+
   const handleCalculate = (values: z.infer<typeof formSchema>) => {
     const attendedSoFar = values.attendedPeriods ?? 0;
     const totalSoFar = values.totalPeriods ?? 0;
 
     let periodsInDateRange = 0;
     if (values.startDate && values.endDate) {
-        if (!isAfter(values.startDate, values.endDate)) {
-             periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
-        }
+      if (!isAfter(startOfDay(values.startDate), startOfDay(values.endDate))) {
+        periodsInDateRange = calculatePeriodsInRange(values.startDate, values.endDate);
+      }
     }
-        
+
     const finalTotal = totalSoFar + periodsInDateRange;
     const finalAttended = attendedSoFar + periodsInDateRange;
 
@@ -111,14 +122,39 @@ export default function AttendanceCalculator() {
     let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? <>You need to attend classes until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}% attendance.<br/>STAY OUT! STAY OUT! STAY OUT!</>
+            ? <>You need to attend classes until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}% attendance.</>
             : `You may not be able to reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
-        message = <>{`You can afford to miss <strong>${Math.floor(canMissPeriods)}</strong> period(s) and maintain ${customSettings.percentage}% attendance.`}<br/>GOLAZOO!</>;
+        message = <>{`You can afford to miss <strong>${Math.floor(canMissPeriods)}</strong> period(s) and maintain ${customSettings.percentage}% attendance.`}</>;
     }
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
     setSimulationResult(null);
+    setAiAdvice("");
+  };
+
+   const handleGetAiAdvice = async () => {
+    if (!result) {
+        toast({ title: "No Calculation Found", description: "Please calculate your attendance first.", variant: "destructive" });
+        return;
+    }
+
+    setIsAiLoading(true);
+    setAiAdvice("");
+
+    try {
+        const advice = await getAttendanceAdvice({
+            attended: result.finalAttended,
+            total: result.finalTotal,
+            requiredPercentage: customSettings.percentage,
+        });
+        setAiAdvice(advice);
+    } catch (error) {
+        console.error("AI Advisor Error:", error);
+        toast({ title: "AI Advisor Error", description: "Could not get advice at this time.", variant: "destructive" });
+    } finally {
+        setIsAiLoading(false);
+    }
   };
   
   const handleSimulate = (type: 'periods' | 'days') => {
@@ -178,7 +214,7 @@ export default function AttendanceCalculator() {
     let message: React.ReactNode = "You're still on track after the leave!";
      if (percentage < customSettings.percentage) {
         message = requiredDate 
-            ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.<br/>YOUR SEAT IS FULL OF WATER!!</>
+            ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
             : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
     } else if (canMissPeriods > 0) {
         message = `After leave, you can still miss <strong>${Math.floor(canMissPeriods)}</strong> period(s).`;
@@ -190,7 +226,6 @@ export default function AttendanceCalculator() {
   const handleSettingsSave = () => {
     setCustomPeriodSettings(customSettings);
     setCustomizationOpen(false);
-    // Recalculate if form has values
     if (form.formState.isSubmitted) {
       form.handleSubmit(handleCalculate)();
     }
@@ -232,13 +267,36 @@ export default function AttendanceCalculator() {
         </Card>
     );
   }
+  
+  const AIAdvisorCard = () => {
+    if (!result) return null;
+    return (
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bot /> AI Attendance Advisor</CardTitle>
+                <CardDescription>Get personalized advice based on your current attendance status.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isAiLoading && <div className="flex items-center justify-center p-4"><LoaderCircle className="h-6 w-6 animate-spin text-primary" /> <p className="ml-2">Getting advice...</p></div>}
+                {!isAiLoading && aiAdvice && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{aiAdvice}</p>}
+                {!isAiLoading && !aiAdvice && <p className="text-sm text-muted-foreground">Click the button to get AI-powered advice.</p>}
+            </CardContent>
+            <CardFooter>
+                <Button onClick={handleGetAiAdvice} disabled={isAiLoading} className="w-full">
+                   {isAiLoading ? "Thinking..." : "Get AI Advice"}
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+  };
+
 
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Radio Check!</CardTitle>
+              <CardTitle>Attendance Calculator</CardTitle>
               <CardDescription>Enter current attendance and select a date range for calculation.</CardDescription>
             </div>
              <Dialog open={isCustomizationOpen} onOpenChange={setCustomizationOpen}>
@@ -344,7 +402,12 @@ export default function AttendanceCalculator() {
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                           <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
                         </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -366,14 +429,8 @@ export default function AttendanceCalculator() {
                             <Calendar 
                                 mode="single" 
                                 selected={field.value} 
-                                onSelect={(date) => {
-                                    field.onChange(date);
-                                    if (date) {
-                                        setEndDateMonth(date);
-                                    }
-                                }}
-                                onMonthChange={setEndDateMonth}
-                                month={endDateMonth}
+                                onSelect={field.onChange}
+                                month={form.getValues().endDate || form.getValues().startDate}
                                 initialFocus
                             />
                         </PopoverContent>
@@ -401,7 +458,7 @@ export default function AttendanceCalculator() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-2"><Info /> Leave Simulation</CardTitle>
-                            <CardDescription>See how taking leave affects your lap time.</CardDescription>
+                            <CardDescription>See how taking leave affects your attendance.</CardDescription>
                         </div>
                          <div className="flex items-center space-x-2">
                             <Label htmlFor="sim-mode" className="text-sm font-medium">{simulationMode === 'project' ? 'Project Future' : 'Apply Leave'}</Label>
@@ -434,12 +491,11 @@ export default function AttendanceCalculator() {
                     </Tabs>
                 </CardContent>
             </Card>
+            <AIAdvisorCard />
         </>
       )}
-       <Chatbot 
-          result={result ? `My current attendance is ${result.percentage.toFixed(2)}%. Attended: ${result.finalAttended}, Total: ${result.finalTotal}. Can miss: ${Math.floor(result.canMissPeriods)}` : "I haven't calculated my attendance yet."}
-          customSettings={customSettings}
-        />
     </div>
   );
 }
+
+    
