@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { format, addDays, isSameDay, isAfter } from "date-fns";
+import { format, addDays, isSameDay, isAfter, startOfDay } from "date-fns";
 import { CalendarIcon, Calculator, Lightbulb, TrendingUp, TrendingDown, Info, Sparkles, LoaderCircle, Settings, Forward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ const formSchema = z.object({
   endDate: z.date({ required_error: "End date is required." }),
 }).refine(data => {
     if (data.startDate && data.endDate) {
-        return !isAfter(data.startDate, data.endDate);
+        return !isAfter(startOfDay(data.startDate), startOfDay(data.endDate));
     }
     return true;
 }, {
@@ -186,15 +186,22 @@ export default function AttendanceCalculator() {
   };
 
   const handleGetAiAdvice = async () => {
-    if (!result) return;
+    if (!result) {
+       toast({
+        title: "Calculate Attendance First",
+        description: "Please calculate your attendance before getting AI advice.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsLoadingAi(true);
     setAiAdvice(null);
-    const { startDate, endDate, attendedPeriods, totalPeriods } = form.getValues();
+    const { startDate, endDate } = form.getValues();
 
     try {
       const res = await attendanceAdvisor({
-        attendedPeriods: attendedPeriods ?? 0,
-        totalPeriods: totalPeriods ?? 0,
+        attendedPeriods: result.finalAttended,
+        totalPeriods: result.finalTotal,
         startDate: format(startDate, 'yyyy-MM-dd'),
         endDate: format(endDate || startDate, 'yyyy-MM-dd'),
         requiredPercentage: customSettings.percentage,
@@ -489,3 +496,5 @@ export default function AttendanceCalculator() {
     </div>
   );
 }
+
+    
