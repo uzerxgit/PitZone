@@ -13,7 +13,7 @@ export default function Home() {
              </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Your personal attendance advisor.
+            Check your stats, Manage, RollOut
           </p>
         </header>
         
