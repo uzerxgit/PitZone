@@ -9,7 +9,7 @@ export default function Home() {
           <div className="inline-flex items-center justify-center gap-3">
              <BotMessageSquare className="h-10 w-10 text-primary" />
              <h1 className="font-headline text-4xl sm:text-5xl font-bold text-primary">
-                AttendWell
+                PitZone
              </h1>
           </div>
           <p className="text-muted-foreground text-lg">
@@ -20,7 +20,7 @@ export default function Home() {
         <AttendanceCalculator />
 
         <footer className="text-center text-muted-foreground/80 text-sm pt-8">
-          <p>Make every class count. Plan smart, live well.</p>
+          <p>Make every leave count. Plan smart, Play well</p>
         </footer>
       </div>
     </main>
