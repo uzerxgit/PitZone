@@ -121,7 +121,7 @@ export default function AttendanceCalculator() {
     if (percentage < customSettings.percentage) {
         const baseMessage = requiredDate 
             ? <>You must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
-            : `You may not reach ${customSettings.percentage}% attendance.`;
+            : <>You may not reach {customSettings.percentage}% attendance.</>;
         message = <>{baseMessage}<br/><strong>YOUR SEAT IS FULL OF WATER</strong></>;
     } else if (canMissPeriods > 0) {
         message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.<br/><strong>GOLAZOO!!</strong></>;
@@ -215,10 +215,10 @@ export default function AttendanceCalculator() {
      if (percentage < customSettings.percentage) {
         const baseMessage = requiredDate 
             ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
-            : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
+            : <>After leave, you may not reach {customSettings.percentage}% attendance this year.</>;
         message = <>{baseMessage}<br/><strong>STAY OUT! STAY OUT! STAY OUT!</strong></>;
     } else if (canMissPeriods > 0) {
-        message = `After leave, you can still miss <strong>${Math.floor(canMissPeriods)}</strong> period(s).`;
+        message = <>After leave, you can still miss <strong>{Math.floor(canMissPeriods)}</strong> period(s).</>;
     }
 
     setSimulationResult({ finalAttended: Math.floor(simAttended), finalTotal: simTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
