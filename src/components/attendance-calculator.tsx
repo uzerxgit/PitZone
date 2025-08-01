@@ -119,12 +119,14 @@ export default function AttendanceCalculator() {
 
     let message: React.ReactNode = "You're on track! Keep it up.";
     if (percentage < customSettings.percentage) {
-        message = requiredDate 
+        const baseMessage = requiredDate 
             ? <>You must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
             : `You may not reach ${customSettings.percentage}% attendance.`;
+        message = <>{baseMessage}<br/><strong>YOUR SEAT IS FULL OF WATER</strong></>;
     } else if (canMissPeriods > 0) {
-        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.<br/><strong>STAY OUT! STAY OUT! STAY OUT!</strong></>;
+        message = <>You can miss up to <strong>{Math.floor(canMissPeriods)}</strong> period(s) and stay above {customSettings.percentage}%.<br/><strong>GOLAZOO!!</strong></>;
     }
+
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
     setSimulationResult(null);
@@ -211,9 +213,10 @@ export default function AttendanceCalculator() {
     
     let message: React.ReactNode = "You're still on track after the leave!";
      if (percentage < customSettings.percentage) {
-        message = requiredDate 
+        const baseMessage = requiredDate 
             ? <>After leave, you must attend until <strong>{format(requiredDate, "PPP")}</strong> to reach {customSettings.percentage}%.</>
             : `After leave, you may not reach ${customSettings.percentage}% attendance this year.`;
+        message = <>{baseMessage}<br/><strong>STAY OUT! STAY OUT! STAY OUT!</strong></>;
     } else if (canMissPeriods > 0) {
         message = `After leave, you can still miss <strong>${Math.floor(canMissPeriods)}</strong> period(s).`;
     }
