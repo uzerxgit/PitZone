@@ -21,8 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { calculatePeriodsInRange, findRequiredAttendanceDate, setCustomPeriodSettings, CustomPeriodSettings } from "@/lib/attendance";
 import { Label } from "@/components/ui/label";
-import { getAttendanceAdvice } from "@/ai/flows/attendance-advisor";
-import { AttendanceRequest } from "@/ai/schemas/attendance-request";
 
 
 const formSchema = z.object({
@@ -69,8 +67,6 @@ export default function AttendanceCalculator() {
   const [simulationMode, setSimulationMode] = useState<'project' | 'apply'>('project');
   const [simulationLeaveAmount, setSimulationLeaveAmount] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const [aiAdvice, setAiAdvice] = useState<string>("");
-  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -132,31 +128,6 @@ export default function AttendanceCalculator() {
 
     setResult({ finalAttended, finalTotal, percentage, periodsToMaintain, canMissPeriods, requiredDate, message });
     setSimulationResult(null);
-    setAiAdvice("");
-  };
-
-   const handleGetAiAdvice = async () => {
-    if (!result) {
-        toast({ title: "No Calculation Found", description: "Please calculate your attendance first.", variant: "destructive" });
-        return;
-    }
-
-    setIsAiLoading(true);
-    setAiAdvice("");
-
-    try {
-        const advice = await getAttendanceAdvice({
-            attended: result.finalAttended,
-            total: result.finalTotal,
-            requiredPercentage: customSettings.percentage,
-        });
-        setAiAdvice(advice);
-    } catch (error) {
-        console.error("AI Advisor Error:", error);
-        toast({ title: "AI Advisor Error", description: "Could not get advice at this time.", variant: "destructive" });
-    } finally {
-        setIsAiLoading(false);
-    }
   };
   
   const handleSimulate = (type: 'periods' | 'days') => {
@@ -272,29 +243,6 @@ export default function AttendanceCalculator() {
         </Card>
     );
   }
-  
-  const AIAdvisorCard = () => {
-    if (!result) return null;
-    return (
-        <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Bot /> AI Attendance Advisor</CardTitle>
-                <CardDescription>Get personalized advice based on your current attendance status.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isAiLoading && <div className="flex items-center justify-center p-4"><LoaderCircle className="h-6 w-6 animate-spin text-primary" /> <p className="ml-2">Getting advice...</p></div>}
-                {!isAiLoading && aiAdvice && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{aiAdvice}</p>}
-                {!isAiLoading && !aiAdvice && <p className="text-sm text-muted-foreground">Click the button to get AI-powered advice.</p>}
-            </CardContent>
-            <CardFooter>
-                <Button onClick={handleGetAiAdvice} disabled={isAiLoading} className="w-full">
-                   {isAiLoading ? "Thinking..." : "Get AI Advice"}
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-  };
-
 
   return (
     <div className="space-y-6">
@@ -496,7 +444,6 @@ export default function AttendanceCalculator() {
                     </Tabs>
                 </CardContent>
             </Card>
-            <AIAdvisorCard />
         </>
       )}
     </div>
